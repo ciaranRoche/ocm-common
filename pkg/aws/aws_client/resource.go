@@ -10,7 +10,7 @@ import (
 	"github.com/openshift-online/ocm-common/pkg/log"
 )
 
-func (client *AWSClient) ResourceExisting(resourceID string) bool {
+func (client *awsClient) ResourceExisting(resourceID string) bool {
 	splitedResource := strings.SplitN(resourceID, "-", 2) //Just split the first -
 	resourceType := splitedResource[0]
 	switch resourceType {
@@ -20,7 +20,7 @@ func (client *AWSClient) ResourceExisting(resourceID string) bool {
 				resourceID,
 			},
 		}
-		output, err := client.Ec2Client.DescribeSecurityGroups(context.TODO(), input)
+		output, err := client.ec2Client.DescribeSecurityGroups(context.TODO(), input)
 		if err != nil {
 			if strings.Contains(err.Error(), "NotFound") {
 				return false
@@ -36,7 +36,7 @@ func (client *AWSClient) ResourceExisting(resourceID string) bool {
 		subnetInput := &ec2.DescribeSubnetsInput{
 			SubnetIds: []string{resourceID},
 		}
-		subnetOutput, err := client.Ec2Client.DescribeSubnets(context.TODO(), subnetInput)
+		subnetOutput, err := client.ec2Client.DescribeSubnets(context.TODO(), subnetInput)
 		if err != nil {
 			if strings.Contains(err.Error(), "NotFound") {
 				return false
@@ -52,7 +52,7 @@ func (client *AWSClient) ResourceExisting(resourceID string) bool {
 		vpcInput := &ec2.DescribeVpcsInput{
 			VpcIds: []string{resourceID},
 		}
-		vpcOutput, err := client.Ec2Client.DescribeVpcs(context.TODO(), vpcInput)
+		vpcOutput, err := client.ec2Client.DescribeVpcs(context.TODO(), vpcInput)
 		if err != nil {
 			if strings.Contains(err.Error(), "NotFound") {
 				return false
@@ -70,7 +70,7 @@ func (client *AWSClient) ResourceExisting(resourceID string) bool {
 				resourceID,
 			},
 		}
-		rbtOutput, err := client.Ec2Client.DescribeRouteTables(context.TODO(), rbtInput)
+		rbtOutput, err := client.ec2Client.DescribeRouteTables(context.TODO(), rbtInput)
 		if err != nil {
 			if strings.Contains(err.Error(), "NotFound") {
 				return false
@@ -88,7 +88,7 @@ func (client *AWSClient) ResourceExisting(resourceID string) bool {
 				resourceID,
 			},
 		}
-		vpcOutput, err := client.Ec2Client.DescribeVpcs(context.TODO(), vpcInput)
+		vpcOutput, err := client.ec2Client.DescribeVpcs(context.TODO(), vpcInput)
 		if err != nil {
 			if strings.Contains(err.Error(), "NotFound") {
 				return false
@@ -106,7 +106,7 @@ func (client *AWSClient) ResourceExisting(resourceID string) bool {
 				resourceID,
 			},
 		}
-		eipOutput, err := client.Ec2Client.DescribeAddresses(context.TODO(), input)
+		eipOutput, err := client.ec2Client.DescribeAddresses(context.TODO(), input)
 		if err != nil {
 			if strings.Contains(err.Error(), "NotFound") {
 				return false
@@ -124,7 +124,7 @@ func (client *AWSClient) ResourceExisting(resourceID string) bool {
 				resourceID,
 			},
 		}
-		output, err := client.Ec2Client.DescribeInternetGateways(context.TODO(), input)
+		output, err := client.ec2Client.DescribeInternetGateways(context.TODO(), input)
 		if err != nil {
 			if strings.Contains(err.Error(), "NotFound") {
 				return false
@@ -142,7 +142,7 @@ func (client *AWSClient) ResourceExisting(resourceID string) bool {
 				resourceID,
 			},
 		}
-		output, err := client.Ec2Client.DescribeNatGateways(context.TODO(), input)
+		output, err := client.ec2Client.DescribeNatGateways(context.TODO(), input)
 		if err != nil {
 			if strings.Contains(err.Error(), "NotFound") {
 				return false
@@ -173,7 +173,7 @@ func (client *AWSClient) ResourceExisting(resourceID string) bool {
 	return false
 }
 
-func (client *AWSClient) ResourceDeleted(resourceID string) bool {
+func (client *awsClient) ResourceDeleted(resourceID string) bool {
 	var deleted bool = true
 	splitedResource := strings.Split(resourceID, "-")
 	resourceType := splitedResource[0]
@@ -182,7 +182,7 @@ func (client *AWSClient) ResourceDeleted(resourceID string) bool {
 		subnetInput := &ec2.DescribeSubnetsInput{
 			SubnetIds: []string{resourceID},
 		}
-		subnetOutput, err := client.Ec2Client.DescribeSubnets(context.TODO(), subnetInput)
+		subnetOutput, err := client.ec2Client.DescribeSubnets(context.TODO(), subnetInput)
 		if err != nil {
 			if strings.Contains(err.Error(), "NotFound") {
 				return true
@@ -200,7 +200,7 @@ func (client *AWSClient) ResourceDeleted(resourceID string) bool {
 				resourceID,
 			},
 		}
-		rbtOutput, err := client.Ec2Client.DescribeRouteTables(context.TODO(), rbtInput)
+		rbtOutput, err := client.ec2Client.DescribeRouteTables(context.TODO(), rbtInput)
 		if err != nil {
 			if strings.Contains(err.Error(), "NotFound") {
 				return true
@@ -218,7 +218,7 @@ func (client *AWSClient) ResourceDeleted(resourceID string) bool {
 				resourceID,
 			},
 		}
-		vpcOutput, err := client.Ec2Client.DescribeVpcs(context.TODO(), vpcInput)
+		vpcOutput, err := client.ec2Client.DescribeVpcs(context.TODO(), vpcInput)
 		if err != nil {
 			if strings.Contains(err.Error(), "NotFound") {
 				return true
@@ -236,7 +236,7 @@ func (client *AWSClient) ResourceDeleted(resourceID string) bool {
 				resourceID,
 			},
 		}
-		eipOutput, err := client.Ec2Client.DescribeAddresses(context.TODO(), input)
+		eipOutput, err := client.ec2Client.DescribeAddresses(context.TODO(), input)
 		if err != nil {
 			if strings.Contains(err.Error(), "NotFound") {
 				return true
@@ -254,7 +254,7 @@ func (client *AWSClient) ResourceDeleted(resourceID string) bool {
 				resourceID,
 			},
 		}
-		output, err := client.Ec2Client.DescribeInternetGateways(context.TODO(), input)
+		output, err := client.ec2Client.DescribeInternetGateways(context.TODO(), input)
 		if err != nil {
 			if strings.Contains(err.Error(), "NotFound") {
 				return true
@@ -272,7 +272,7 @@ func (client *AWSClient) ResourceDeleted(resourceID string) bool {
 				resourceID,
 			},
 		}
-		output, err := client.Ec2Client.DescribeSecurityGroups(context.TODO(), input)
+		output, err := client.ec2Client.DescribeSecurityGroups(context.TODO(), input)
 		if err != nil {
 			if strings.Contains(err.Error(), "NotFound") {
 				return true
@@ -290,7 +290,7 @@ func (client *AWSClient) ResourceDeleted(resourceID string) bool {
 				resourceID,
 			},
 		}
-		output, err := client.Ec2Client.DescribeNatGateways(context.TODO(), input)
+		output, err := client.ec2Client.DescribeNatGateways(context.TODO(), input)
 		if err != nil {
 			log.LogError(err.Error())
 			return false
@@ -310,7 +310,7 @@ func (client *AWSClient) ResourceDeleted(resourceID string) bool {
 }
 
 // WaitForResourceExisting will wait for the resource created in <timeout> seconds
-func (client *AWSClient) WaitForResourceExisting(resourceID string, timeout int) error {
+func (client *awsClient) WaitForResourceExisting(resourceID string, timeout int) error {
 	now := time.Now()
 	for now.Add(time.Duration(timeout) * time.Second).After(time.Now()) {
 		if client.ResourceExisting(resourceID) {
@@ -322,7 +322,7 @@ func (client *AWSClient) WaitForResourceExisting(resourceID string, timeout int)
 }
 
 // WaitForResourceExisting will wait for the resource created in <timeout> seconds
-func (client *AWSClient) WaitForResourceDeleted(resourceID string, timeout int) error {
+func (client *awsClient) WaitForResourceDeleted(resourceID string, timeout int) error {
 	now := time.Now()
 	for now.Add(time.Duration(timeout) * time.Second).After(time.Now()) {
 		if client.ResourceDeleted(resourceID) {

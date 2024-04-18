@@ -9,7 +9,7 @@ import (
 	"github.com/openshift-online/ocm-common/pkg/log"
 )
 
-func (client *AWSClient) CreateNatGateway(subnetID string, allocationID string, vpcID string) (*ec2.CreateNatGatewayOutput, error) {
+func (client *awsClient) CreateNatGateway(subnetID string, allocationID string, vpcID string) (*ec2.CreateNatGatewayOutput, error) {
 	inputCreateNat := &ec2.CreateNatGatewayInput{
 		SubnetId:          aws.String(subnetID),
 		AllocationId:      aws.String(allocationID),
@@ -18,7 +18,7 @@ func (client *AWSClient) CreateNatGateway(subnetID string, allocationID string, 
 		DryRun:            nil,
 		TagSpecifications: nil,
 	}
-	respCreateNat, err := client.Ec2Client.CreateNatGateway(context.TODO(), inputCreateNat)
+	respCreateNat, err := client.ec2Client.CreateNatGateway(context.TODO(), inputCreateNat)
 	if err != nil {
 		log.LogError("Create nat error " + err.Error())
 		return nil, err
@@ -29,12 +29,12 @@ func (client *AWSClient) CreateNatGateway(subnetID string, allocationID string, 
 }
 
 // DeleteNatGateway will wait for <timeout> seconds for nat gateway becomes status of deleted
-func (client *AWSClient) DeleteNatGateway(natGatewayID string, timeout ...int) (*ec2.DeleteNatGatewayOutput, error) {
+func (client *awsClient) DeleteNatGateway(natGatewayID string, timeout ...int) (*ec2.DeleteNatGatewayOutput, error) {
 	inputDeleteNatGateway := &ec2.DeleteNatGatewayInput{
 		NatGatewayId: aws.String(natGatewayID),
 		DryRun:       nil,
 	}
-	respDeleteNatGateway, err := client.Ec2Client.DeleteNatGateway(context.TODO(), inputDeleteNatGateway)
+	respDeleteNatGateway, err := client.ec2Client.DeleteNatGateway(context.TODO(), inputDeleteNatGateway)
 	if err != nil {
 		log.LogError("Delete Nat Gateway error " + err.Error())
 		return nil, err
@@ -51,7 +51,7 @@ func (client *AWSClient) DeleteNatGateway(natGatewayID string, timeout ...int) (
 	return respDeleteNatGateway, err
 }
 
-func (client *AWSClient) ListNatGateWays(vpcID string) ([]types.NatGateway, error) {
+func (client *awsClient) ListNatGateWays(vpcID string) ([]types.NatGateway, error) {
 	vpcFilter := "vpc-id"
 	filter := []types.Filter{
 		types.Filter{
@@ -64,7 +64,7 @@ func (client *AWSClient) ListNatGateWays(vpcID string) ([]types.NatGateway, erro
 	input := &ec2.DescribeNatGatewaysInput{
 		Filter: filter,
 	}
-	output, err := client.Ec2Client.DescribeNatGateways(context.TODO(), input)
+	output, err := client.ec2Client.DescribeNatGateways(context.TODO(), input)
 	if err != nil {
 		return nil, err
 	}

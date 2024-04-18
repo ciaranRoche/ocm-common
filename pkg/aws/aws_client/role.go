@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/iam/types"
 )
 
-func (client *AWSClient) CreateRole(roleName string,
+func (client *awsClient) CreateRole(roleName string,
 	assumeRolePolicyDocument string,
 	permissionBoundry string,
 	tags map[string]string,
@@ -30,7 +30,7 @@ func (client *AWSClient) CreateRole(roleName string,
 		Tags:                     roleTags,
 		Description:              &description,
 	}
-	resp, err := client.IamClient.CreateRole(context.TODO(), input)
+	resp, err := client.iamClient.CreateRole(context.TODO(), input)
 	if err != nil {
 		return *resp.Role, err
 	}
@@ -38,27 +38,27 @@ func (client *AWSClient) CreateRole(roleName string,
 	return *resp.Role, err
 }
 
-func (client *AWSClient) GetRole(roleName string) (*types.Role, error) {
+func (client *awsClient) GetRole(roleName string) (*types.Role, error) {
 	input := &iam.GetRoleInput{
 		RoleName: &roleName,
 	}
-	out, err := client.IamClient.GetRole(context.TODO(), input)
+	out, err := client.iamClient.GetRole(context.TODO(), input)
 	return out.Role, err
 }
-func (client *AWSClient) DeleteRole(roleName string) error {
+func (client *awsClient) DeleteRole(roleName string) error {
 
 	input := &iam.DeleteRoleInput{
 		RoleName: &roleName,
 	}
-	_, err := client.IamClient.DeleteRole(context.TODO(), input)
+	_, err := client.iamClient.DeleteRole(context.TODO(), input)
 	return err
 }
 
-func (client *AWSClient) DeleteRoleAndPolicy(roleName string, managedPolicy bool) error {
+func (client *awsClient) DeleteRoleAndPolicy(roleName string, managedPolicy bool) error {
 	input := &iam.ListAttachedRolePoliciesInput{
 		RoleName: &roleName,
 	}
-	output, err := client.IamClient.ListAttachedRolePolicies(client.ClientContext, input)
+	output, err := client.iamClient.ListAttachedRolePolicies(context.TODO(), input)
 	if err != nil {
 		return err
 	}
@@ -84,8 +84,8 @@ func (client *AWSClient) DeleteRoleAndPolicy(roleName string, managedPolicy bool
 	return err
 }
 
-func (client *AWSClient) ListRoles() ([]types.Role, error) {
+func (client *awsClient) ListRoles() ([]types.Role, error) {
 	input := &iam.ListRolesInput{}
-	out, err := client.IamClient.ListRoles(context.TODO(), input)
+	out, err := client.iamClient.ListRoles(context.TODO(), input)
 	return out.Roles, err
 }

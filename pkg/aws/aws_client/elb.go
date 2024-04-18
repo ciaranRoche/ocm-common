@@ -9,11 +9,11 @@ import (
 	"github.com/openshift-online/ocm-common/pkg/log"
 )
 
-func (client *AWSClient) DescribeLoadBalancers(vpcID string) ([]elbtypes.LoadBalancerDescription, error) {
+func (client *awsClient) DescribeLoadBalancers(vpcID string) ([]elbtypes.LoadBalancerDescription, error) {
 
 	listenedELB := []elbtypes.LoadBalancerDescription{}
 	input := &elb.DescribeLoadBalancersInput{}
-	resp, err := client.ElbClient.DescribeLoadBalancers(context.TODO(), input)
+	resp, err := client.elbClient.DescribeLoadBalancers(context.TODO(), input)
 	if err != nil {
 		return nil, err
 	}
@@ -30,13 +30,13 @@ func (client *AWSClient) DescribeLoadBalancers(vpcID string) ([]elbtypes.LoadBal
 	return listenedELB, err
 }
 
-func (client *AWSClient) DeleteELB(ELB elbtypes.LoadBalancerDescription) error {
+func (client *awsClient) DeleteELB(ELB elbtypes.LoadBalancerDescription) error {
 	log.LogInfo("Goint to delete ELB %s", *ELB.LoadBalancerName)
 
 	deleteELBInput := &elb.DeleteLoadBalancerInput{
 		// LoadBalancerArn: ELB.LoadBalancerArn,
 		LoadBalancerName: ELB.LoadBalancerName,
 	}
-	_, err := client.ElbClient.DeleteLoadBalancer(context.TODO(), deleteELBInput)
+	_, err := client.elbClient.DeleteLoadBalancer(context.TODO(), deleteELBInput)
 	return err
 }

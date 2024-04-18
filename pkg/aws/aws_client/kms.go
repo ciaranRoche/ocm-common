@@ -9,10 +9,10 @@ import (
 	"github.com/openshift-online/ocm-common/pkg/log"
 )
 
-func (client *AWSClient) CreateKMSKeys(tagKey string, tagValue string, description string, policy string, multiRegion bool) (keyID string, keyArn string, err error) {
+func (client *awsClient) CreateKMSKeys(tagKey string, tagValue string, description string, policy string, multiRegion bool) (keyID string, keyArn string, err error) {
 	//Create the key
 
-	result, err := client.KmsClient.CreateKey(context.TODO(), &kms.CreateKeyInput{
+	result, err := client.kmsClient.CreateKey(context.TODO(), &kms.CreateKeyInput{
 		Tags: []types.Tag{
 			{
 				TagKey:   aws.String(tagKey),
@@ -32,9 +32,9 @@ func (client *AWSClient) CreateKMSKeys(tagKey string, tagValue string, descripti
 	return *result.KeyMetadata.KeyId, *result.KeyMetadata.Arn, err
 }
 
-func (client *AWSClient) DescribeKMSKeys(keyID string) (kms.DescribeKeyOutput, error) {
+func (client *awsClient) DescribeKMSKeys(keyID string) (kms.DescribeKeyOutput, error) {
 	// Create the key
-	result, err := client.KmsClient.DescribeKey(context.TODO(), &kms.DescribeKeyInput{
+	result, err := client.kmsClient.DescribeKey(context.TODO(), &kms.DescribeKeyInput{
 		KeyId: &keyID,
 	})
 	if err != nil {
@@ -42,8 +42,8 @@ func (client *AWSClient) DescribeKMSKeys(keyID string) (kms.DescribeKeyOutput, e
 	}
 	return *result, err
 }
-func (client *AWSClient) ScheduleKeyDeletion(kmsKeyId string, pendingWindowInDays int32) (*kms.ScheduleKeyDeletionOutput, error) {
-	result, err := client.KmsClient.ScheduleKeyDeletion(context.TODO(), &kms.ScheduleKeyDeletionInput{
+func (client *awsClient) ScheduleKeyDeletion(kmsKeyId string, pendingWindowInDays int32) (*kms.ScheduleKeyDeletionOutput, error) {
+	result, err := client.kmsClient.ScheduleKeyDeletion(context.TODO(), &kms.ScheduleKeyDeletionInput{
 		KeyId:               aws.String(kmsKeyId),
 		PendingWindowInDays: &pendingWindowInDays,
 	})
@@ -55,12 +55,12 @@ func (client *AWSClient) ScheduleKeyDeletion(kmsKeyId string, pendingWindowInDay
 	return result, err
 }
 
-func (client *AWSClient) GetKMSPolicy(keyID string, policyName string) (kms.GetKeyPolicyOutput, error) {
+func (client *awsClient) GetKMSPolicy(keyID string, policyName string) (kms.GetKeyPolicyOutput, error) {
 
 	if policyName == "" {
 		policyName = "default"
 	}
-	result, err := client.KmsClient.GetKeyPolicy(context.TODO(), &kms.GetKeyPolicyInput{
+	result, err := client.kmsClient.GetKeyPolicy(context.TODO(), &kms.GetKeyPolicyInput{
 		KeyId:      &keyID,
 		PolicyName: &policyName,
 	})
@@ -70,11 +70,11 @@ func (client *AWSClient) GetKMSPolicy(keyID string, policyName string) (kms.GetK
 	return *result, err
 }
 
-func (client *AWSClient) PutKMSPolicy(keyID string, policyName string, policy string) (kms.PutKeyPolicyOutput, error) {
+func (client *awsClient) PutKMSPolicy(keyID string, policyName string, policy string) (kms.PutKeyPolicyOutput, error) {
 	if policyName == "" {
 		policyName = "default"
 	}
-	result, err := client.KmsClient.PutKeyPolicy(context.TODO(), &kms.PutKeyPolicyInput{
+	result, err := client.kmsClient.PutKeyPolicy(context.TODO(), &kms.PutKeyPolicyInput{
 		KeyId:      &keyID,
 		PolicyName: &policyName,
 		Policy:     &policy,
@@ -85,9 +85,9 @@ func (client *AWSClient) PutKMSPolicy(keyID string, policyName string, policy st
 	return *result, err
 }
 
-func (client *AWSClient) TagKeys(kmsKeyId string, tagKey string, tagValue string) (*kms.TagResourceOutput, error) {
+func (client *awsClient) TagKeys(kmsKeyId string, tagKey string, tagValue string) (*kms.TagResourceOutput, error) {
 
-	output, err := client.KmsClient.TagResource(context.TODO(), &kms.TagResourceInput{
+	output, err := client.kmsClient.TagResource(context.TODO(), &kms.TagResourceInput{
 		KeyId: &kmsKeyId,
 		Tags: []types.Tag{
 			{

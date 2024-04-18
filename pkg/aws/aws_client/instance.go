@@ -15,7 +15,7 @@ import (
 	"github.com/openshift-online/ocm-common/pkg/log"
 )
 
-func (client *AWSClient) LaunchInstance(subnetID string, imageID string, count int, instanceType string, keyName string, securityGroupIds []string, wait bool) (*ec2.RunInstancesOutput, error) {
+func (client *awsClient) LaunchInstance(subnetID string, imageID string, count int, instanceType string, keyName string, securityGroupIds []string, wait bool) (*ec2.RunInstancesOutput, error) {
 	input := &ec2.RunInstancesInput{
 		ImageId:          aws.String(imageID),
 		MinCount:         aws.Int32(int32(count)),
@@ -25,7 +25,7 @@ func (client *AWSClient) LaunchInstance(subnetID string, imageID string, count i
 		SecurityGroupIds: securityGroupIds,
 		SubnetId:         &subnetID,
 	}
-	output, err := client.Ec2Client.RunInstances(context.TODO(), input)
+	output, err := client.ec2Client.RunInstances(context.TODO(), input)
 	if wait && err == nil {
 		instanceIDs := []string{}
 		for _, instance := range output.Instances {
@@ -45,7 +45,7 @@ func (client *AWSClient) LaunchInstance(subnetID string, imageID string, count i
 // ListInstance pass parameter like
 // map[string][]string{"vpc-id":[]string{"<id>" }}, map[string][]string{"tag:Name":[]string{"<value>" }}
 // instanceIDs can be empty. And if you would like to get more info from the instances like security groups, it should be set
-func (client *AWSClient) ListInstances(instanceIDs []string, filters ...map[string][]string) ([]types.Instance, error) {
+func (client *awsClient) ListInstances(instanceIDs []string, filters ...map[string][]string) ([]types.Instance, error) {
 	FilterInput := []types.Filter{}
 	for _, filter := range filters {
 		for k, v := range filter {
@@ -62,7 +62,7 @@ func (client *AWSClient) ListInstances(instanceIDs []string, filters ...map[stri
 	if len(instanceIDs) != 0 {
 		getInstanceInput.InstanceIds = instanceIDs
 	}
-	resp, err := client.EC2().DescribeInstances(context.TODO(), getInstanceInput)
+	resp, err := client.ec2Client.DescribeInstances(context.TODO(), getInstanceInput)
 	if err != nil {
 		log.LogError("List instances failed with filters %v: %s", filters, err)
 	}
@@ -73,7 +73,7 @@ func (client *AWSClient) ListInstances(instanceIDs []string, filters ...map[stri
 	return instances, err
 }
 
-func (client *AWSClient) WaitForInstanceReady(instanceID string, timeout time.Duration) error {
+func (client *awsClient) WaitForInstanceReady(instanceID string, timeout time.Duration) error {
 	instanceIDs := []string{
 		instanceID,
 	}
@@ -82,19 +82,19 @@ func (client *AWSClient) WaitForInstanceReady(instanceID string, timeout time.Du
 	return err
 }
 
-func (client *AWSClient) CheckInstanceState(instanceIDs ...string) (*ec2.DescribeInstanceStatusOutput, error) {
+func (client *awsClient) CheckInstanceState(instanceIDs ...string) (*ec2.DescribeInstanceStatusOutput, error) {
 	log.LogInfo("Check instances status of %s", strings.Join(instanceIDs, ","))
 	includeAll := true
 	input := &ec2.DescribeInstanceStatusInput{
 		InstanceIds:         instanceIDs,
 		IncludeAllInstances: &includeAll,
 	}
-	output, err := client.Ec2Client.DescribeInstanceStatus(context.TODO(), input)
+	output, err := client.ec2Client.DescribeInstanceStatus(context.TODO(), input)
 	return output, err
 }
 
 // timeout indicates the minutes
-func (client *AWSClient) WaitForInstancesRunning(instanceIDs []string, timeout time.Duration) (allRunning bool, err error) {
+func (client *awsClient) WaitForInstancesRunning(instanceIDs []string, timeout time.Duration) (allRunning bool, err error) {
 	startTime := time.Now()
 
 	for time.Now().Before(startTime.Add(timeout * time.Minute)) {
@@ -123,7 +123,7 @@ func (client *AWSClient) WaitForInstancesRunning(instanceIDs []string, timeout t
 	err = fmt.Errorf("timeout for waiting instances running")
 	return
 }
-func (client *AWSClient) WaitForInstancesTerminated(instanceIDs []string, timeout time.Duration) (allTerminated bool, err error) {
+func (client *awsClient) WaitForInstancesTerminated(instanceIDs []string, timeout time.Duration) (allTerminated bool, err error) {
 	startTime := time.Now()
 	for time.Now().Before(startTime.Add(timeout * time.Minute)) {
 		allTerminated = true
@@ -154,7 +154,7 @@ func (client *AWSClient) WaitForInstancesTerminated(instanceIDs []string, timeou
 }
 
 // Search instance types for specified region/availability zones
-func (client *AWSClient) ListAvaliableInstanceTypesForRegion(region string, availabilityZones ...string) ([]string, error) {
+func (client *awsClient) ListAvaliableInstanceTypesForRegion(region string, availabilityZones ...string) ([]string, error) {
 	var params *ec2.DescribeInstanceTypeOfferingsInput
 	if len(availabilityZones) > 0 {
 		params = &ec2.DescribeInstanceTypeOfferingsInput{
@@ -167,7 +167,7 @@ func (client *AWSClient) ListAvaliableInstanceTypesForRegion(region string, avai
 		}
 	}
 	var instanceTypes []types.InstanceTypeOffering
-	paginator := ec2.NewDescribeInstanceTypeOfferingsPaginator(client.Ec2Client, params)
+	paginator := ec2.NewDescribeInstanceTypeOfferingsPaginator(client.ec2Client, params)
 	for paginator.HasMorePages() {
 		page, err := paginator.NextPage(context.TODO())
 		if err != nil {
@@ -184,9 +184,9 @@ func (client *AWSClient) ListAvaliableInstanceTypesForRegion(region string, avai
 
 // List avaliablezone for specific region
 // zone type are: local-zone/availability-zone/wavelength-zone
-func (client *AWSClient) ListAvaliableZonesForRegion(region string, zoneType string) ([]string, error) {
+func (client *awsClient) ListAvaliableZonesForRegion(region string, zoneType string) ([]string, error) {
 	var zones []string
-	availabilityZones, err := client.Ec2Client.DescribeAvailabilityZones(context.TODO(), &ec2.DescribeAvailabilityZonesInput{
+	availabilityZones, err := client.ec2Client.DescribeAvailabilityZones(context.TODO(), &ec2.DescribeAvailabilityZonesInput{
 		Filters: []types.Filter{
 			{
 				Name:   aws.String("region-name"),
@@ -211,7 +211,7 @@ func (client *AWSClient) ListAvaliableZonesForRegion(region string, zoneType str
 	}
 	return zones, nil
 }
-func (client *AWSClient) TerminateInstances(instanceIDs []string, wait bool, timeout time.Duration) error {
+func (client *awsClient) TerminateInstances(instanceIDs []string, wait bool, timeout time.Duration) error {
 	if len(instanceIDs) == 0 {
 		log.LogInfo("Got no instances to terminate.")
 		return nil
@@ -219,7 +219,7 @@ func (client *AWSClient) TerminateInstances(instanceIDs []string, wait bool, tim
 	terminateInput := &ec2.TerminateInstancesInput{
 		InstanceIds: instanceIDs,
 	}
-	_, err := client.EC2().TerminateInstances(context.TODO(), terminateInput)
+	_, err := client.ec2Client.TerminateInstances(context.TODO(), terminateInput)
 	if err != nil {
 		log.LogError("Error happens when terminate instances %s : %s", strings.Join(instanceIDs, ","), err)
 		return err
@@ -237,17 +237,17 @@ func (client *AWSClient) TerminateInstances(instanceIDs []string, wait bool, tim
 	return nil
 }
 
-func (client *AWSClient) WaitForInstanceTerminated(instanceIDs []string, timeout time.Duration) error {
+func (client *awsClient) WaitForInstanceTerminated(instanceIDs []string, timeout time.Duration) error {
 	log.LogInfo("Waiting for below instances terminated: %s ", strings.Join(instanceIDs, ","))
 	_, err := client.WaitForInstancesTerminated(instanceIDs, timeout)
 	return err
 }
 
-func (client *AWSClient) GetTagsOfInstanceProfile(instanceProfileName string) ([]iamtypes.Tag, error) {
+func (client *awsClient) GetTagsOfInstanceProfile(instanceProfileName string) ([]iamtypes.Tag, error) {
 	input := &iam.ListInstanceProfileTagsInput{
 		InstanceProfileName: &instanceProfileName,
 	}
-	resp, err := client.IamClient.ListInstanceProfileTags(context.TODO(), input)
+	resp, err := client.iamClient.ListInstanceProfileTags(context.TODO(), input)
 	if err != nil {
 		return nil, err
 	}

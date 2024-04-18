@@ -10,7 +10,7 @@ import (
 	"github.com/openshift-online/ocm-common/pkg/log"
 )
 
-func (client *AWSClient) CreateIAMPolicy(policyName string, policyDocument string, tags map[string]string) (*types.Policy, error) {
+func (client *awsClient) CreateIAMPolicy(policyName string, policyDocument string, tags map[string]string) (*types.Policy, error) {
 	var policyTags []types.Tag
 	for tagKey, tagValue := range tags {
 		policyTags = append(policyTags, types.Tag{
@@ -25,7 +25,7 @@ func (client *AWSClient) CreateIAMPolicy(policyName string, policyDocument strin
 		Tags:           policyTags,
 		Description:    &description,
 	}
-	output, err := client.IamClient.CreatePolicy(context.TODO(), input)
+	output, err := client.iamClient.CreatePolicy(context.TODO(), input)
 	if err != nil {
 		return nil, err
 	}
@@ -33,15 +33,15 @@ func (client *AWSClient) CreateIAMPolicy(policyName string, policyDocument strin
 	return output.Policy, err
 }
 
-func (client *AWSClient) GetIAMPolicy(policyArn string) (*types.Policy, error) {
+func (client *awsClient) GetIAMPolicy(policyArn string) (*types.Policy, error) {
 	input := &iam.GetPolicyInput{
 		PolicyArn: &policyArn,
 	}
-	out, err := client.IamClient.GetPolicy(context.TODO(), input)
+	out, err := client.iamClient.GetPolicy(context.TODO(), input)
 	return out.Policy, err
 }
 
-func (client *AWSClient) DeleteIAMPolicy(arn string) error {
+func (client *awsClient) DeleteIAMPolicy(arn string) error {
 	input := &iam.DeletePolicyInput{
 		PolicyArn: &arn,
 	}
@@ -49,35 +49,34 @@ func (client *AWSClient) DeleteIAMPolicy(arn string) error {
 	if err != nil {
 		return err
 	}
-	_, err = client.IamClient.DeletePolicy(context.TODO(), input)
+	_, err = client.iamClient.DeletePolicy(context.TODO(), input)
 	return err
 }
 
-func (client *AWSClient) AttachIAMPolicy(roleName string, policyArn string) error {
+func (client *awsClient) AttachIAMPolicy(roleName string, policyArn string) error {
 	input := &iam.AttachRolePolicyInput{
 		PolicyArn: &policyArn,
 		RoleName:  &roleName,
 	}
-	_, err := client.IamClient.AttachRolePolicy(context.TODO(), input)
+	_, err := client.iamClient.AttachRolePolicy(context.TODO(), input)
 	return err
 
 }
-func (client *AWSClient) DetachIAMPolicy(roleAName string, policyArn string) error {
+func (client *awsClient) DetachIAMPolicy(roleAName string, policyArn string) error {
 	input := &iam.DetachRolePolicyInput{
 		RoleName:  &roleAName,
 		PolicyArn: &policyArn,
 	}
-	_, err := client.IamClient.DetachRolePolicy(context.TODO(), input)
+	_, err := client.iamClient.DetachRolePolicy(context.TODO(), input)
 	return err
 }
-func (client *AWSClient) GetCustomerIAMPolicies() ([]types.Policy, error) {
-
+func (client *awsClient) GetCustomerIAMPolicies() ([]types.Policy, error) {
 	maxItem := int32(1000)
 	input := &iam.ListPoliciesInput{
 		Scope:    "Local",
 		MaxItems: &maxItem,
 	}
-	out, err := client.IamClient.ListPolicies(context.TODO(), input)
+	out, err := client.iamClient.ListPolicies(context.TODO(), input)
 	if err != nil {
 		return nil, err
 	}
@@ -94,8 +93,8 @@ func CleanByName(policy types.Policy) bool {
 	return strings.Contains(*policy.PolicyName, "sdq-ci-")
 }
 
-func (client *AWSClient) FilterNeedCleanPolicies(cleanRule func(types.Policy) bool) ([]types.Policy, error) {
-	needClean := []types.Policy{}
+func (client *awsClient) FilterNeedCleanPolicies(cleanRule func(types.Policy) bool) ([]types.Policy, error) {
+	var needClean []types.Policy
 
 	policies, err := client.GetCustomerIAMPolicies()
 	if err != nil {
@@ -110,7 +109,7 @@ func (client *AWSClient) FilterNeedCleanPolicies(cleanRule func(types.Policy) bo
 	return needClean, nil
 }
 
-func (client *AWSClient) DeletePolicy(arn string) error {
+func (client *awsClient) DeletePolicy(arn string) error {
 	input := &iam.DeletePolicyInput{
 		PolicyArn: &arn,
 	}
@@ -118,15 +117,15 @@ func (client *AWSClient) DeletePolicy(arn string) error {
 	if err != nil {
 		return err
 	}
-	_, err = client.IamClient.DeletePolicy(context.TODO(), input)
+	_, err = client.iamClient.DeletePolicy(context.TODO(), input)
 	return err
 }
 
-func (client *AWSClient) DeletePolicyVersions(policyArn string) error {
+func (client *awsClient) DeletePolicyVersions(policyArn string) error {
 	input := &iam.ListPolicyVersionsInput{
 		PolicyArn: &policyArn,
 	}
-	out, err := client.IamClient.ListPolicyVersions(context.TODO(), input)
+	out, err := client.iamClient.ListPolicyVersions(context.TODO(), input)
 	if err != nil {
 		return err
 	}
@@ -138,14 +137,14 @@ func (client *AWSClient) DeletePolicyVersions(policyArn string) error {
 			PolicyArn: &policyArn,
 			VersionId: version.VersionId,
 		}
-		_, err = client.IamClient.DeletePolicyVersion(context.TODO(), input)
+		_, err = client.iamClient.DeletePolicyVersion(context.TODO(), input)
 		if err != nil {
 			return err
 		}
 	}
 	return nil
 }
-func (client *AWSClient) CleanPolicies(cleanRule func(types.Policy) bool) error {
+func (client *awsClient) CleanPolicies(cleanRule func(types.Policy) bool) error {
 	policies, err := client.FilterNeedCleanPolicies(cleanRule)
 	if err != nil {
 		return err

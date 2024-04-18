@@ -7,9 +7,9 @@ import (
 	"github.com/openshift-online/ocm-common/pkg/log"
 )
 
-func (client *AWSClient) DescribeVolumeByID(volumeID string) (*ec2.DescribeVolumesOutput, error) {
+func (client *awsClient) DescribeVolumeByID(volumeID string) (*ec2.DescribeVolumesOutput, error) {
 
-	output, err := client.Ec2Client.DescribeVolumes(context.TODO(), &ec2.DescribeVolumesInput{
+	output, err := client.ec2Client.DescribeVolumes(context.TODO(), &ec2.DescribeVolumesInput{
 		VolumeIds: []string{volumeID},
 	})
 

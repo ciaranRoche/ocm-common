@@ -2,6 +2,8 @@ package aws_client
 
 import (
 	"context"
+	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"github.com/openshift-online/ocm-common/pkg/aws/api"
 	"os"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -19,20 +21,52 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/route53"
 )
 
-type AWSClient struct {
-	Ec2Client            *ec2.Client
+type AwsClient interface {
+	ListVPCByName(vpcName string) ([]types.Vpc, error)
+	CreateVpc(cidr string, name ...string) (*ec2.CreateVpcOutput, error)
+}
+
+type awsClient struct {
+	config    aws.Config
+	accountID string
+	ec2Client api.Ec2ApiClient
+	stsClient api.StsApiClient
+	iamClient api.IamApiClient
+
+	route53Client        *route53.Client
+	stackFormationClient *cloudformation.Client
+	elbClient            *elb.Client
+	kmsClient            *kms.Client
+}
+
+type AwsClientSpec struct {
+	Config    aws.Config
+	AccountID string
+	Ec2Client api.Ec2ApiClient
+	StsClient api.StsApiClient
+	IamClient api.IamApiClient
+
 	Route53Client        *route53.Client
 	StackFormationClient *cloudformation.Client
 	ElbClient            *elb.Client
-	StsClient            *sts.Client
-	Region               string
-	IamClient            *iam.Client
-	ClientContext        context.Context
-	AccountID            string
 	KmsClient            *kms.Client
 }
 
-func CreateAWSClient(profileName string, region string) (*AWSClient, error) {
+func NewAwsClient(spec AwsClientSpec) AwsClient {
+	return &awsClient{
+		config:    spec.Config,
+		ec2Client: spec.Ec2Client,
+		stsClient: spec.StsClient,
+		iamClient: spec.IamClient,
+
+		route53Client:        spec.Route53Client,
+		stackFormationClient: spec.StackFormationClient,
+		elbClient:            spec.ElbClient,
+		kmsClient:            spec.KmsClient,
+	}
+}
+
+func CreateAWSClient(profileName string, region string) (AwsClient, error) {
 	var cfg aws.Config
 	var err error
 
@@ -67,40 +101,9 @@ func CreateAWSClient(profileName string, region string) (*AWSClient, error) {
 		return nil, err
 	}
 
-	awsClient := &AWSClient{
-		Ec2Client:            ec2.NewFromConfig(cfg),
-		Route53Client:        route53.NewFromConfig(cfg),
-		StackFormationClient: cloudformation.NewFromConfig(cfg),
-		ElbClient:            elb.NewFromConfig(cfg),
-		Region:               region,
-		StsClient:            sts.NewFromConfig(cfg),
-		IamClient:            iam.NewFromConfig(cfg),
-		ClientContext:        context.TODO(),
-		KmsClient:            kms.NewFromConfig(cfg),
-	}
-	awsClient.AccountID = awsClient.GetAWSAccountID()
-	return awsClient, nil
-}
-
-func (client *AWSClient) GetAWSAccountID() string {
-	input := &sts.GetCallerIdentityInput{}
-	out, err := client.StsClient.GetCallerIdentity(client.ClientContext, input)
-	if err != nil {
-		return ""
-	}
-	return *out.Account
-}
-
-func (client *AWSClient) EC2() *ec2.Client {
-	return client.Ec2Client
-}
-
-func (client *AWSClient) Route53() *route53.Client {
-	return client.Route53Client
-}
-func (client *AWSClient) CloudFormation() *cloudformation.Client {
-	return client.StackFormationClient
-}
-func (client *AWSClient) ELB() *elb.Client {
-	return client.ElbClient
+	return NewAwsClient(AwsClientSpec{
+		Ec2Client: ec2.NewFromConfig(cfg),
+		StsClient: sts.NewFromConfig(cfg),
+		IamClient: iam.NewFromConfig(cfg),
+	}), nil
 }

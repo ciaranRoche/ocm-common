@@ -10,7 +10,7 @@ import (
 	"github.com/openshift-online/ocm-common/pkg/log"
 )
 
-func (client *AWSClient) ListSecurityGroups(vpcID string) ([]types.SecurityGroup, error) {
+func (client *awsClient) ListSecurityGroups(vpcID string) ([]types.SecurityGroup, error) {
 	vpcFilter := "vpc-id"
 	customizedSGs := []types.SecurityGroup{}
 	filter := []types.Filter{
@@ -24,7 +24,7 @@ func (client *AWSClient) ListSecurityGroups(vpcID string) ([]types.SecurityGroup
 	describeSGInput := &ec2.DescribeSecurityGroupsInput{
 		Filters: filter,
 	}
-	output, err := client.Ec2Client.DescribeSecurityGroups(context.TODO(), describeSGInput)
+	output, err := client.ec2Client.DescribeSecurityGroups(context.TODO(), describeSGInput)
 	if err != nil {
 		return nil, err
 	}
@@ -37,7 +37,7 @@ func (client *AWSClient) ListSecurityGroups(vpcID string) ([]types.SecurityGroup
 	return customizedSGs, nil
 }
 
-func (client *AWSClient) ReleaseInboundOutboundRules(sgID string) error {
+func (client *awsClient) ReleaseInboundOutboundRules(sgID string) error {
 	filterKey := "group-id"
 	filter := []types.Filter{
 		types.Filter{
@@ -50,7 +50,7 @@ func (client *AWSClient) ReleaseInboundOutboundRules(sgID string) error {
 	describeSGInput := &ec2.DescribeSecurityGroupRulesInput{
 		Filters: filter,
 	}
-	resp, err := client.Ec2Client.DescribeSecurityGroupRules(context.TODO(), describeSGInput)
+	resp, err := client.ec2Client.DescribeSecurityGroupRules(context.TODO(), describeSGInput)
 	if err != nil {
 		log.LogError("Describe  rules failed for SG %s: %s", sgID, err.Error())
 		return err
@@ -71,7 +71,7 @@ func (client *AWSClient) ReleaseInboundOutboundRules(sgID string) error {
 			GroupId:              &sgID,
 			SecurityGroupRuleIds: ingressRules,
 		}
-		_, err = client.Ec2Client.RevokeSecurityGroupIngress(context.TODO(), releaseIngressRuleInput)
+		_, err = client.ec2Client.RevokeSecurityGroupIngress(context.TODO(), releaseIngressRuleInput)
 		if err != nil {
 			log.LogError("Release inbound rules failed for SG %s: %s", sgID, err.Error())
 			return err
@@ -82,7 +82,7 @@ func (client *AWSClient) ReleaseInboundOutboundRules(sgID string) error {
 			GroupId:              &sgID,
 			SecurityGroupRuleIds: egressRules,
 		}
-		_, err = client.Ec2Client.RevokeSecurityGroupEgress(context.TODO(), releaseEgressRuleInput)
+		_, err = client.ec2Client.RevokeSecurityGroupEgress(context.TODO(), releaseEgressRuleInput)
 		if err != nil {
 			log.LogError("Release outbound rules failed for SG %s: %s", sgID, err.Error())
 			return err
@@ -92,7 +92,7 @@ func (client *AWSClient) ReleaseInboundOutboundRules(sgID string) error {
 	return nil
 }
 
-func (client *AWSClient) DeleteSecurityGroup(groupID string) (*ec2.DeleteSecurityGroupOutput, error) {
+func (client *awsClient) DeleteSecurityGroup(groupID string) (*ec2.DeleteSecurityGroupOutput, error) {
 
 	err := client.ReleaseInboundOutboundRules(groupID)
 	if err != nil {
@@ -105,7 +105,7 @@ func (client *AWSClient) DeleteSecurityGroup(groupID string) (*ec2.DeleteSecurit
 		GroupName: nil,
 	}
 
-	resp, err := client.Ec2Client.DeleteSecurityGroup(context.TODO(), input)
+	resp, err := client.ec2Client.DeleteSecurityGroup(context.TODO(), input)
 	if err != nil {
 		log.LogError("Delete security group %s failed %s", groupID, err.Error())
 		return nil, err
@@ -113,7 +113,7 @@ func (client *AWSClient) DeleteSecurityGroup(groupID string) (*ec2.DeleteSecurit
 	log.LogInfo("Delete security group %s success ", groupID)
 	return resp, err
 }
-func (client *AWSClient) AuthorizeSecurityGroupIngress(groupID string, cidr string, protocol string, fromPort int32, toPort int32) (*ec2.AuthorizeSecurityGroupIngressOutput, error) {
+func (client *awsClient) AuthorizeSecurityGroupIngress(groupID string, cidr string, protocol string, fromPort int32, toPort int32) (*ec2.AuthorizeSecurityGroupIngressOutput, error) {
 	input := &ec2.AuthorizeSecurityGroupIngressInput{
 		CidrIp:                     aws.String(cidr),
 		DryRun:                     nil,
@@ -128,7 +128,7 @@ func (client *AWSClient) AuthorizeSecurityGroupIngress(groupID string, cidr stri
 		ToPort:                     aws.Int32(toPort),
 	}
 
-	resp, err := client.Ec2Client.AuthorizeSecurityGroupIngress(context.TODO(), input)
+	resp, err := client.ec2Client.AuthorizeSecurityGroupIngress(context.TODO(), input)
 	if err != nil {
 		log.LogError("Authorize security group failed " + err.Error())
 		return nil, err
@@ -137,7 +137,7 @@ func (client *AWSClient) AuthorizeSecurityGroupIngress(groupID string, cidr stri
 	return resp, err
 }
 
-func (client *AWSClient) CreateSecurityGroup(vpcID string, groupName string, sgDescription string) (*ec2.CreateSecurityGroupOutput, error) {
+func (client *awsClient) CreateSecurityGroup(vpcID string, groupName string, sgDescription string) (*ec2.CreateSecurityGroupOutput, error) {
 	input := &ec2.CreateSecurityGroupInput{
 		Description:       aws.String(sgDescription),
 		GroupName:         aws.String(groupName),
@@ -146,7 +146,7 @@ func (client *AWSClient) CreateSecurityGroup(vpcID string, groupName string, sgD
 		VpcId:             aws.String(vpcID),
 	}
 
-	resp, err := client.Ec2Client.CreateSecurityGroup(context.TODO(), input)
+	resp, err := client.ec2Client.CreateSecurityGroup(context.TODO(), input)
 	if err != nil {
 		log.LogError("Create security group failed " + err.Error())
 		return nil, err
@@ -167,12 +167,12 @@ func (client *AWSClient) CreateSecurityGroup(vpcID string, groupName string, sgD
 	return resp, err
 }
 
-func (client *AWSClient) GetSecurityGroupWithID(sgID string) (*ec2.DescribeSecurityGroupsOutput, error) {
+func (client *awsClient) GetSecurityGroupWithID(sgID string) (*ec2.DescribeSecurityGroupsOutput, error) {
 
 	describeSGInput := &ec2.DescribeSecurityGroupsInput{
 		GroupIds: []string{sgID},
 	}
-	output, err := client.Ec2Client.DescribeSecurityGroups(context.TODO(), describeSGInput)
+	output, err := client.ec2Client.DescribeSecurityGroups(context.TODO(), describeSGInput)
 	if err != nil {
 		return nil, err
 	}

@@ -8,7 +8,7 @@ import (
 	"github.com/openshift-online/ocm-common/pkg/log"
 )
 
-func (client *AWSClient) AllocateEIPAddress() (*ec2.AllocateAddressOutput, error) {
+func (client *awsClient) AllocateEIPAddress() (*ec2.AllocateAddressOutput, error) {
 	inputs := &ec2.AllocateAddressInput{
 		Address:               nil,
 		CustomerOwnedIpv4Pool: nil,
@@ -19,7 +19,7 @@ func (client *AWSClient) AllocateEIPAddress() (*ec2.AllocateAddressOutput, error
 		TagSpecifications:     nil,
 	}
 
-	respEIP, err := client.Ec2Client.AllocateAddress(context.TODO(), inputs)
+	respEIP, err := client.ec2Client.AllocateAddress(context.TODO(), inputs)
 	if err != nil {
 		log.LogError("Create eip failed " + err.Error())
 		return nil, err
@@ -28,14 +28,14 @@ func (client *AWSClient) AllocateEIPAddress() (*ec2.AllocateAddressOutput, error
 	return respEIP, err
 }
 
-func (client *AWSClient) DisassociateAddress(associateID string) (*ec2.DisassociateAddressOutput, error) {
+func (client *awsClient) DisassociateAddress(associateID string) (*ec2.DisassociateAddressOutput, error) {
 	inputDisassociate := &ec2.DisassociateAddressInput{
 		AssociationId: aws.String(associateID),
 		DryRun:        nil,
 		PublicIp:      nil,
 	}
 
-	respDisassociate, err := client.Ec2Client.DisassociateAddress(context.TODO(), inputDisassociate)
+	respDisassociate, err := client.ec2Client.DisassociateAddress(context.TODO(), inputDisassociate)
 	if err != nil {
 		log.LogError("Disassociate eip failed " + err.Error())
 		return nil, err
@@ -44,14 +44,14 @@ func (client *AWSClient) DisassociateAddress(associateID string) (*ec2.Disassoci
 	return respDisassociate, err
 }
 
-func (client *AWSClient) AllocateEIPAndAssociateInstance(instanceID string) (string, error) {
+func (client *awsClient) AllocateEIPAndAssociateInstance(instanceID string) (string, error) {
 	allocRes, err := client.AllocateEIPAddress()
 	if err != nil {
 		log.LogError("Failed allocated EIP: %s", err)
 	} else {
 		log.LogInfo("Successfully allocated EIP: %s", *allocRes.PublicIp)
 	}
-	assocRes, err := client.EC2().AssociateAddress(context.TODO(),
+	assocRes, err := client.ec2Client.AssociateAddress(context.TODO(),
 		&ec2.AssociateAddressInput{
 			AllocationId: allocRes.AllocationId,
 			InstanceId:   aws.String(instanceID),
@@ -72,14 +72,14 @@ func (client *AWSClient) AllocateEIPAndAssociateInstance(instanceID string) (str
 	return *allocRes.PublicIp, nil
 }
 
-func (client *AWSClient) ReleaseAddress(allocationID string) (*ec2.ReleaseAddressOutput, error) {
+func (client *awsClient) ReleaseAddress(allocationID string) (*ec2.ReleaseAddressOutput, error) {
 	inputRelease := &ec2.ReleaseAddressInput{
 		AllocationId:       aws.String(allocationID),
 		DryRun:             nil,
 		NetworkBorderGroup: nil,
 		PublicIp:           nil,
 	}
-	respRelease, err := client.Ec2Client.ReleaseAddress(context.TODO(), inputRelease)
+	respRelease, err := client.ec2Client.ReleaseAddress(context.TODO(), inputRelease)
 	if err != nil {
 		log.LogError("Release eip failed " + err.Error())
 		return nil, err

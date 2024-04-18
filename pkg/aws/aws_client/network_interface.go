@@ -8,7 +8,7 @@ import (
 	"github.com/openshift-online/ocm-common/pkg/log"
 )
 
-func (client *AWSClient) DescribeNetWorkInterface(vpcID string) ([]types.NetworkInterface, error) {
+func (client *awsClient) DescribeNetWorkInterface(vpcID string) ([]types.NetworkInterface, error) {
 	vpcFilter := "vpc-id"
 	filter := []types.Filter{
 		types.Filter{
@@ -21,14 +21,14 @@ func (client *AWSClient) DescribeNetWorkInterface(vpcID string) ([]types.Network
 	input := &ec2.DescribeNetworkInterfacesInput{
 		Filters: filter,
 	}
-	resp, err := client.Ec2Client.DescribeNetworkInterfaces(context.TODO(), input)
+	resp, err := client.ec2Client.DescribeNetworkInterfaces(context.TODO(), input)
 	if err != nil {
 		return nil, err
 	}
 	return resp.NetworkInterfaces, err
 }
 
-func (client *AWSClient) DeleteNetworkInterface(networkinterface types.NetworkInterface) error {
+func (client *awsClient) DeleteNetworkInterface(networkinterface types.NetworkInterface) error {
 	association := networkinterface.Association
 	if association != nil {
 		if association.AllocationId != nil {
@@ -44,7 +44,7 @@ func (client *AWSClient) DeleteNetworkInterface(networkinterface types.NetworkIn
 	deleteNIInput := &ec2.DeleteNetworkInterfaceInput{
 		NetworkInterfaceId: networkinterface.NetworkInterfaceId,
 	}
-	_, err := client.Ec2Client.DeleteNetworkInterface(context.TODO(), deleteNIInput)
+	_, err := client.ec2Client.DeleteNetworkInterface(context.TODO(), deleteNIInput)
 	if err != nil {
 		log.LogError("Delete network interface %s failed： %s", *networkinterface.NetworkInterfaceId, err)
 	} else {

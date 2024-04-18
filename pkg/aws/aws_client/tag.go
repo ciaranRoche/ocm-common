@@ -8,7 +8,7 @@ import (
 	"github.com/openshift-online/ocm-common/pkg/log"
 )
 
-func (client *AWSClient) TagResource(resourceID string, tags map[string]string) (*ec2.CreateTagsOutput, error) {
+func (client *awsClient) TagResource(resourceID string, tags map[string]string) (*ec2.CreateTagsOutput, error) {
 	awsTags := []types.Tag{}
 	for key, value := range tags {
 		Key := key
@@ -24,7 +24,7 @@ func (client *AWSClient) TagResource(resourceID string, tags map[string]string) 
 		Tags:      awsTags,
 	}
 
-	output, err := client.Ec2Client.CreateTags(context.TODO(), updateBody)
+	output, err := client.ec2Client.CreateTags(context.TODO(), updateBody)
 	if err != nil {
 		log.LogError("Tag resource %s failed: %s", resourceID, err.Error())
 	} else {
@@ -33,7 +33,7 @@ func (client *AWSClient) TagResource(resourceID string, tags map[string]string) 
 	return output, err
 }
 
-func (client *AWSClient) RemoveResourceTag(resourceID string, tagKey string, tagValue string) (*ec2.DeleteTagsOutput, error) {
+func (client *awsClient) RemoveResourceTag(resourceID string, tagKey string, tagValue string) (*ec2.DeleteTagsOutput, error) {
 	tags := []types.Tag{
 		types.Tag{
 			Key:   &tagKey,
@@ -44,7 +44,7 @@ func (client *AWSClient) RemoveResourceTag(resourceID string, tagKey string, tag
 		Resources: []string{resourceID},
 		Tags:      tags,
 	}
-	output, err := client.Ec2Client.DeleteTags(context.TODO(), updateBody)
+	output, err := client.ec2Client.DeleteTags(context.TODO(), updateBody)
 	if err != nil {
 		log.LogError("Remove resource tag %s:%s from %s failed", tagKey, tagValue, resourceID)
 	} else {

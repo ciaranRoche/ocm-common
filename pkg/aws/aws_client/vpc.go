@@ -11,11 +11,11 @@ import (
 	"github.com/openshift-online/ocm-common/pkg/log"
 )
 
-func (client *AWSClient) ListVPCByName(vpcName string) ([]types.Vpc, error) {
-	vpcs := []types.Vpc{}
+func (client *awsClient) ListVPCByName(vpcName string) ([]types.Vpc, error) {
+	var vpcs []types.Vpc
 	filterKey := "tag:Name"
 	filter := []types.Filter{
-		types.Filter{
+		{
 			Name:   &filterKey,
 			Values: []string{vpcName},
 		},
@@ -23,7 +23,7 @@ func (client *AWSClient) ListVPCByName(vpcName string) ([]types.Vpc, error) {
 	input := &ec2.DescribeVpcsInput{
 		Filters: filter,
 	}
-	resp, err := client.Ec2Client.DescribeVpcs(context.TODO(), input)
+	resp, err := client.ec2Client.DescribeVpcs(context.TODO(), input)
 	if err != nil {
 		return vpcs, err
 	}
@@ -31,7 +31,7 @@ func (client *AWSClient) ListVPCByName(vpcName string) ([]types.Vpc, error) {
 	return vpcs, nil
 }
 
-func (client *AWSClient) CreateVpc(cidr string, name ...string) (*ec2.CreateVpcOutput, error) {
+func (client *awsClient) CreateVpc(cidr string, name ...string) (*ec2.CreateVpcOutput, error) {
 	vpcName := CON.VpcDefaultName
 	if len(name) == 1 {
 		vpcName = name[0]
@@ -49,7 +49,7 @@ func (client *AWSClient) CreateVpc(cidr string, name ...string) (*ec2.CreateVpcO
 		TagSpecifications: nil,
 	}
 
-	resp, err := client.Ec2Client.CreateVpc(context.TODO(), input)
+	resp, err := client.ec2Client.CreateVpc(context.TODO(), input)
 	if err != nil {
 		log.LogError("Create vpc error " + err.Error())
 		return nil, err
@@ -71,7 +71,7 @@ func (client *AWSClient) CreateVpc(cidr string, name ...string) (*ec2.CreateVpcO
 
 // ModifyVpcDnsAttribute will modify the vpc attibutes
 // dnsAttribute should be the value of "DnsHostnames" and "DnsSupport"
-func (client *AWSClient) ModifyVpcDnsAttribute(vpcID string, dnsAttribute string, status bool) (*ec2.ModifyVpcAttributeOutput, error) {
+func (client *awsClient) ModifyVpcDnsAttribute(vpcID string, dnsAttribute string, status bool) (*ec2.ModifyVpcAttributeOutput, error) {
 	inputModifyVpc := &ec2.ModifyVpcAttributeInput{}
 
 	if dnsAttribute == CON.VpcDnsHostnamesAttribute {
@@ -86,7 +86,7 @@ func (client *AWSClient) ModifyVpcDnsAttribute(vpcID string, dnsAttribute string
 		}
 	}
 
-	resp, err := client.Ec2Client.ModifyVpcAttribute(context.TODO(), inputModifyVpc)
+	resp, err := client.ec2Client.ModifyVpcAttribute(context.TODO(), inputModifyVpc)
 	if err != nil {
 		log.LogError("Modify vpc dns attribute failed " + err.Error())
 		return nil, err
@@ -95,13 +95,13 @@ func (client *AWSClient) ModifyVpcDnsAttribute(vpcID string, dnsAttribute string
 	return resp, err
 }
 
-func (client *AWSClient) DeleteVpc(vpcID string) (*ec2.DeleteVpcOutput, error) {
+func (client *awsClient) DeleteVpc(vpcID string) (*ec2.DeleteVpcOutput, error) {
 	input := &ec2.DeleteVpcInput{
 		VpcId:  aws.String(vpcID),
 		DryRun: nil,
 	}
 
-	resp, err := client.Ec2Client.DeleteVpc(context.TODO(), input)
+	resp, err := client.ec2Client.DeleteVpc(context.TODO(), input)
 	if err != nil {
 		log.LogError("Delete vpc %s failed "+err.Error(), vpcID)
 		return nil, err
@@ -110,13 +110,13 @@ func (client *AWSClient) DeleteVpc(vpcID string) (*ec2.DeleteVpcOutput, error) {
 	return resp, err
 
 }
-func (client *AWSClient) DescribeVPC(vpcID string) (types.Vpc, error) {
+func (client *awsClient) DescribeVPC(vpcID string) (types.Vpc, error) {
 	var vpc types.Vpc
 	input := &ec2.DescribeVpcsInput{
 		VpcIds: []string{vpcID},
 	}
 
-	resp, err := client.Ec2Client.DescribeVpcs(context.TODO(), input)
+	resp, err := client.ec2Client.DescribeVpcs(context.TODO(), input)
 	if err != nil {
 		return vpc, err
 	}
@@ -124,7 +124,7 @@ func (client *AWSClient) DescribeVPC(vpcID string) (types.Vpc, error) {
 	return vpc, err
 }
 
-func (client *AWSClient) ListEndpointAssociation(vpcID string) ([]types.VpcEndpoint, error) {
+func (client *awsClient) ListEndpointAssociation(vpcID string) ([]types.VpcEndpoint, error) {
 	vpcFilterKey := "vpc-id"
 	filters := []types.Filter{
 		types.Filter{
@@ -136,14 +136,14 @@ func (client *AWSClient) ListEndpointAssociation(vpcID string) ([]types.VpcEndpo
 	input := ec2.DescribeVpcEndpointsInput{
 		Filters: filters,
 	}
-	resp, err := client.Ec2Client.DescribeVpcEndpoints(context.TODO(), &input)
+	resp, err := client.ec2Client.DescribeVpcEndpoints(context.TODO(), &input)
 	if err != nil {
 		return nil, err
 	}
 	return resp.VpcEndpoints, err
 }
 
-func (client *AWSClient) DeleteVPCEndpoints(vpcID string) error {
+func (client *awsClient) DeleteVPCEndpoints(vpcID string) error {
 	vpcEndpoints, err := client.ListEndpointAssociation(vpcID)
 	if err != nil {
 		return err
@@ -156,7 +156,7 @@ func (client *AWSClient) DeleteVPCEndpoints(vpcID string) error {
 		input := &ec2.DeleteVpcEndpointsInput{
 			VpcEndpointIds: endpoints,
 		}
-		_, err = client.Ec2Client.DeleteVpcEndpoints(context.TODO(), input)
+		_, err = client.ec2Client.DeleteVpcEndpoints(context.TODO(), input)
 		if err != nil {
 			log.LogError("Delete vpc endpoints %s failed: %s", strings.Join(endpoints, ","), err.Error())
 		} else {

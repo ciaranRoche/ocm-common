@@ -9,12 +9,12 @@ import (
 	"github.com/openshift-online/ocm-common/pkg/log"
 )
 
-func (client *AWSClient) CreateInternetGateway() (*ec2.CreateInternetGatewayOutput, error) {
+func (client *awsClient) CreateInternetGateway() (*ec2.CreateInternetGatewayOutput, error) {
 	inputCreateInternetGateway := &ec2.CreateInternetGatewayInput{
 		DryRun:            nil,
 		TagSpecifications: nil,
 	}
-	respCreateInternetGateway, err := client.Ec2Client.CreateInternetGateway(context.TODO(), inputCreateInternetGateway)
+	respCreateInternetGateway, err := client.ec2Client.CreateInternetGateway(context.TODO(), inputCreateInternetGateway)
 	if err != nil {
 		log.LogError("Create igw error " + err.Error())
 		return nil, err
@@ -23,14 +23,14 @@ func (client *AWSClient) CreateInternetGateway() (*ec2.CreateInternetGatewayOutp
 	return respCreateInternetGateway, err
 }
 
-func (client *AWSClient) AttachInternetGateway(internetGatewayID string, vpcID string) (*ec2.AttachInternetGatewayOutput, error) {
+func (client *awsClient) AttachInternetGateway(internetGatewayID string, vpcID string) (*ec2.AttachInternetGatewayOutput, error) {
 
 	input := &ec2.AttachInternetGatewayInput{
 		InternetGatewayId: aws.String(internetGatewayID),
 		VpcId:             aws.String(vpcID),
 		DryRun:            nil,
 	}
-	resp, err := client.Ec2Client.AttachInternetGateway(context.TODO(), input)
+	resp, err := client.ec2Client.AttachInternetGateway(context.TODO(), input)
 	if err != nil {
 		log.LogError("Attach igw error " + err.Error())
 		return nil, err
@@ -39,13 +39,13 @@ func (client *AWSClient) AttachInternetGateway(internetGatewayID string, vpcID s
 	return resp, err
 }
 
-func (client *AWSClient) DetachInternetGateway(internetGatewayID string, vpcID string) (*ec2.DetachInternetGatewayOutput, error) {
+func (client *awsClient) DetachInternetGateway(internetGatewayID string, vpcID string) (*ec2.DetachInternetGatewayOutput, error) {
 	input := &ec2.DetachInternetGatewayInput{
 		InternetGatewayId: aws.String(internetGatewayID),
 		VpcId:             aws.String(vpcID),
 		DryRun:            nil,
 	}
-	resp, err := client.Ec2Client.DetachInternetGateway(context.TODO(), input)
+	resp, err := client.ec2Client.DetachInternetGateway(context.TODO(), input)
 	if err != nil {
 		log.LogError("Detach igw %s error  from vpc %s:"+err.Error(), internetGatewayID, vpcID)
 		return nil, err
@@ -53,7 +53,7 @@ func (client *AWSClient) DetachInternetGateway(internetGatewayID string, vpcID s
 	log.LogInfo("Detach igw %s success from vpc %s", internetGatewayID, vpcID)
 	return resp, err
 }
-func (client *AWSClient) ListInternetGateWay(vpcID string) ([]types.InternetGateway, error) {
+func (client *awsClient) ListInternetGateWay(vpcID string) ([]types.InternetGateway, error) {
 	vpcFilter := "attachment.vpc-id"
 	filter := []types.Filter{
 		types.Filter{
@@ -66,18 +66,18 @@ func (client *AWSClient) ListInternetGateWay(vpcID string) ([]types.InternetGate
 	input := &ec2.DescribeInternetGatewaysInput{
 		Filters: filter,
 	}
-	resp, err := client.Ec2Client.DescribeInternetGateways(context.TODO(), input)
+	resp, err := client.ec2Client.DescribeInternetGateways(context.TODO(), input)
 	if err != nil {
 		return nil, err
 	}
 	return resp.InternetGateways, err
 }
-func (client *AWSClient) DeleteInternetGateway(internetGatewayID string) (*ec2.DeleteInternetGatewayOutput, error) {
+func (client *awsClient) DeleteInternetGateway(internetGatewayID string) (*ec2.DeleteInternetGatewayOutput, error) {
 	inputDeleteInternetGateway := &ec2.DeleteInternetGatewayInput{
 		InternetGatewayId: aws.String(internetGatewayID),
 		DryRun:            nil,
 	}
-	respDeleteInternetGateway, err := client.Ec2Client.DeleteInternetGateway(context.TODO(), inputDeleteInternetGateway)
+	respDeleteInternetGateway, err := client.ec2Client.DeleteInternetGateway(context.TODO(), inputDeleteInternetGateway)
 	if err != nil {
 		log.LogError("Delete igw error " + err.Error())
 		return nil, err
