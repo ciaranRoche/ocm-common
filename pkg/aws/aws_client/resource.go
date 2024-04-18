@@ -310,7 +310,7 @@ func (client *AWSClient) ResourceDeleted(resourceID string) bool {
 }
 
 // WaitForResourceExisting will wait for the resource created in <timeout> seconds
-func (client AWSClient) WaitForResourceExisting(resourceID string, timeout int) error {
+func (client *AWSClient) WaitForResourceExisting(resourceID string, timeout int) error {
 	now := time.Now()
 	for now.Add(time.Duration(timeout) * time.Second).After(time.Now()) {
 		if client.ResourceExisting(resourceID) {
@@ -322,7 +322,7 @@ func (client AWSClient) WaitForResourceExisting(resourceID string, timeout int) 
 }
 
 // WaitForResourceExisting will wait for the resource created in <timeout> seconds
-func (client AWSClient) WaitForResourceDeleted(resourceID string, timeout int) error {
+func (client *AWSClient) WaitForResourceDeleted(resourceID string, timeout int) error {
 	now := time.Now()
 	for now.Add(time.Duration(timeout) * time.Second).After(time.Now()) {
 		if client.ResourceDeleted(resourceID) {
