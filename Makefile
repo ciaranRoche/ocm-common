@@ -24,9 +24,23 @@ export CGO_ENABLED=0
 # Unset GOFLAG for CI and ensure we've got nothing accidently set
 unexport GOFLAGS
 
+# Constants
+GOPATH := $(shell go env GOPATH)
+
+# Version
+revision:=$(shell git rev-parse --short HEAD)
+build_time:=$(shell date +%D@%T)
+version_stamp:=$(revision)-$(build_time)
+import_path:=github.com/openshift-online/ocm-support-cli
+ldflags:=-X $(import_path)/pkg/info.VersionStamp=$(version_stamp)
+
 .PHONY: build
-build:
-	go build
+build: clean
+	go build -o rosa-helper -ldflags="$(ldflags)" ./cmd/rosa-helper || exit 1
+
+.PHONY: install
+install: clean
+	go build -o $(GOPATH)/bin/rosa-helper -ldflags="$(ldflags)" ./cmd/rosa-helper || exit 1
 
 .PHONY: test
 test:
@@ -47,5 +61,5 @@ lint:
 .PHONY: clean
 clean:
 	rm -rf \
-		ocm-common \
+		rosa-helper \
 		$(NULL)
